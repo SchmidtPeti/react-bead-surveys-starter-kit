@@ -1,19 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSurveys, selectSurvey } from '../redux/surveySlice';
+import { fetchSurveys, selectSurveys, selectSurvey, deleteSurvey, modifySurvey } from '../redux/surveySlice';
+
+const SurveyItem = ({survey, handleDelete, handleCopyLink, handleEdit}) => {
+  const [newSurveyName, setNewSurveyName] = useState(survey.name);
+  const [newSurveyContent, setNewSurveyContent] = useState(survey.content);
+
+  return (
+    <div key={survey.id}>
+      <h2>
+        <Link to={`/surveys/${survey.id}`}>{survey.name}</Link>
+      </h2>
+      <p>{new Date(survey.createdAt).toLocaleDateString()}</p>
+      <button onClick={() => handleDelete(survey.id)}>Delete</button>
+      <button onClick={() => handleCopyLink(survey.hash)}>Copy Link</button>
+      <button onClick={() => handleEdit(survey.id, {title: newSurveyName, content: newSurveyContent})}>Edit</button>
+      <Link to={`/surveys/${survey.id}/responses`}>View Responses</Link>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        handleEdit(survey.id, {name: newSurveyName, content: newSurveyContent})
+      }}>
+        <input type="text" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} />
+        <textarea value={newSurveyContent} onChange={(e) => setNewSurveyContent(e.target.value)}>
+        </textarea>
+        <button type="submit">Update</button>
+      </form>
+    </div>
+  )
+}
 
 function MySurveys() {
   const dispatch = useDispatch();
-  const { surveys } = useSelector(selectSurvey);
-  console.log("i am so cute:", surveys);
+  const surveys = useSelector(selectSurveys);
+  const { modifySurveyStatus, deleteSurveyStatus } = useSelector(selectSurvey);
 
   useEffect(() => {
     dispatch(fetchSurveys());
-  }, [dispatch]);
+  }, [dispatch, modifySurveyStatus, deleteSurveyStatus]);
 
   const handleDelete = (surveyId) => {
-    // TODO: delete the survey from the server
+    dispatch(deleteSurvey(surveyId));
   };
 
   const handleCopyLink = async (hash) => {
@@ -26,13 +53,11 @@ function MySurveys() {
       console.log('Failed to copy URL: ', err);
     }
   };
-  
 
-  const handleEdit = (surveyId) => {
-    // TODO: modify the survey
+  const handleEdit = (surveyId, newSurveyData) => {
+    dispatch(modifySurvey({ surveyId, newSurveyData }));
   };
 
-  // Check if surveys.data exists and if it has length.
   if (!surveys || !surveys.data || surveys.data.length === 0) {
     return (
       <div>
@@ -45,19 +70,15 @@ function MySurveys() {
   return (
     <div>
       <h1>My Surveys</h1>
-      {/* Access the survey data from surveys.data */}
-      {surveys.data.map((survey) => (
-        <div key={survey.id}>
-          <h2>
-            <Link to={`/surveys/${survey.id}`}>{survey.name}</Link>
-          </h2>
-          <p>{new Date(survey.createdAt).toLocaleDateString()}</p>
-          <button onClick={() => handleDelete(survey.id)}>Delete</button>
-          <button onClick={() => handleCopyLink(survey.hash)}>Copy Link</button>
-          <button onClick={() => handleEdit(survey.id)}>Edit</button>
-          <Link to={`/surveys/${survey.id}/responses`}>View Responses</Link>
-        </div>
-      ))}
+      {surveys.data.map((survey) => 
+        <SurveyItem 
+          key={survey.id} 
+          survey={survey} 
+          handleDelete={handleDelete} 
+          handleCopyLink={handleCopyLink} 
+          handleEdit={handleEdit} 
+        />
+      )}
     </div>
   );
 }

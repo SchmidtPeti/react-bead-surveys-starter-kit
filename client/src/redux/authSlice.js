@@ -3,10 +3,11 @@ import axios from 'axios';
 
 const initialState = {
   status: 'idle',
-  isLoggedIn: false,
-  userData: {},
+  isLoggedIn: !!localStorage.getItem('userData'), // Check if there is any userData in localStorage
+  userData: JSON.parse(localStorage.getItem('userData')) || {}, // Retrieve userData from localStorage or set to empty object
   error: null
 };
+
 
 export const login = createAsyncThunk('auth/login', async (credentials, thunkAPI) => {
   try {
@@ -14,6 +15,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, thunkAPI
       ...credentials,
       strategy: "local"
     });
+    localStorage.setItem('userData', JSON.stringify(response.data));
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response.data);
@@ -36,6 +38,7 @@ export const authSlice = createSlice({
     logout: (state) => {
       state.isLoggedIn = false;
       state.userData = {};
+      localStorage.removeItem('userData');
     },
   },
   extraReducers: (builder) => {

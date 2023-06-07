@@ -46,7 +46,7 @@ function App() {
         <Route path="/new-survey" element={<NewSurvey />} /> 
         <Route path="/my-surveys" element={<MySurveys />} />
         <Route path="/" element={<Home />} />
-        <Route path="/survey/:id" element={<Survey />} />
+        <Route path="/survey/:hash" element={<Survey />} />
         <Route path="/responses/:id" element={<Responses />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
