@@ -13,11 +13,10 @@ const initialState = {
 
 export const createSurvey = createAsyncThunk('survey/createSurvey', async (survey, thunkAPI) => {
   try {
-    const { surveyName, surveyContent } = survey; // destructuring the survey object
-    const state = thunkAPI.getState(); // getting the current state
-    const userToken = state.auth.userData.accessToken; // retrieving user's token from auth state
+    const { surveyName, surveyContent } = survey;
+    const state = thunkAPI.getState();
+    const userToken = state.auth.userData.accessToken;
     
-    // Notice that userId is not being sent in the request body anymore
     console.log('createSurvey userToken: ', userToken );
     const response = await axios.post('http://localhost:3030/surveys', 
       { 
@@ -34,7 +33,7 @@ export const createSurvey = createAsyncThunk('survey/createSurvey', async (surve
 });
 
 
-  export const fetchSurveys = createAsyncThunk('survey/fetchSurveys', async (_, thunkAPI) => {
+export const fetchSurveys = createAsyncThunk('survey/fetchSurveys', async (_, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
       const userToken = state.auth.userData.accessToken;
@@ -54,7 +53,7 @@ export const createSurvey = createAsyncThunk('survey/createSurvey', async (surve
       return thunkAPI.rejectWithValue(error.response.data);
     }
   });
-  export const fetchSurveyByHash = createAsyncThunk('survey/fetchSurveyByHash', async (hash, thunkAPI) => {
+export const fetchSurveyByHash = createAsyncThunk('survey/fetchSurveyByHash', async (hash, thunkAPI) => {
     try {
       const state = thunkAPI.getState();
       const userToken = state.auth.userData.accessToken;
@@ -88,12 +87,30 @@ export const deleteSurvey = createAsyncThunk('survey/deleteSurvey', async (surve
     return thunkAPI.rejectWithValue(error.response.data);
   }
 });
+export const fetchSurveyById = createAsyncThunk('survey/fetchSurveyById', async (id, thunkAPI) => {
+  console.log("fetchSurveyById id:", id)
+  try {
+    const state = thunkAPI.getState();
+    const userToken = state.auth.userData.accessToken;
+    console.log("fetchSurveyById userToken:", userToken, "id:", id)
+    const response = await axios.get(`http://localhost:3030/surveys/${id}`, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.log("fetchSurveyById error: ", error.response.data);
+    return thunkAPI.rejectWithValue(error.response.data);
+  }
+});
 
 export const modifySurvey = createAsyncThunk('survey/modifySurvey', async ({surveyId, newSurveyData}, thunkAPI) => {
   try {
     const state = thunkAPI.getState();
     const userToken = state.auth.userData.accessToken;
-    // Ensure that newSurveyData contains a `name` property instead of `title`
     if (newSurveyData.title) {
       newSurveyData.name = newSurveyData.title;
       delete newSurveyData.title;
@@ -150,7 +167,7 @@ export const surveySlice = createSlice({
       })
       .addCase(fetchSurveyByHash.fulfilled, (state, action) => {
         state.fetchSurveyByHashStatus = 'finished';
-        state.survey = action.payload; // Storing the fetched survey in state
+        state.survey = action.payload;
       })
       .addCase(fetchSurveyByHash.rejected, (state, action) => {
         state.fetchSurveyByHashStatus = 'failed';
@@ -181,11 +198,21 @@ export const surveySlice = createSlice({
           state.surveys[index] = action.payload;
         }
       })
-      
       .addCase(modifySurvey.rejected, (state, action) => {
         state.modifySurveyStatus = 'failed';
         state.error = action.error.message;
-      });
+      })
+      .addCase(fetchSurveyById.pending, (state) => {
+        state.status = 'loading';
+    })
+    .addCase(fetchSurveyById.fulfilled, (state, action) => {
+        state.status = 'idle';
+        state.survey = action.payload;
+    })
+    .addCase(fetchSurveyById.rejected, (state, action) => {
+        state.status = 'idle';
+        state.error = action.error.message;
+    });
   },
 });
 

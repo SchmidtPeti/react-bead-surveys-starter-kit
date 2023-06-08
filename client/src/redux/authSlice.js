@@ -3,8 +3,8 @@ import axios from 'axios';
 
 const initialState = {
   status: 'idle',
-  isLoggedIn: !!localStorage.getItem('userData'), // Check if there is any userData in localStorage
-  userData: JSON.parse(localStorage.getItem('userData')) || {}, // Retrieve userData from localStorage or set to empty object
+  isLoggedIn: !!localStorage.getItem('userData'), 
+  userData: JSON.parse(localStorage.getItem('userData')) || {}, 
   error: null
 };
 
@@ -24,6 +24,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, thunkAPI
 export const register = createAsyncThunk('auth/register', async (credentials, thunkAPI) => {
     try {
       const response = await axios.post('http://localhost:3030/users', credentials);
+      console.log('register response: ', response);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response.data);
@@ -59,12 +60,12 @@ export const authSlice = createSlice({
         state.status = 'loading';
       })
       .addCase(register.fulfilled, (state, action) => {
-        state.status = 'idle';
+        state.status = 'finished';
         state.isLoggedIn = true;
         state.userData = action.payload;
       })
       .addCase(register.rejected, (state, action) => {
-        state.status = 'idle';
+        state.status = 'failed';
         state.error = action.error.message;
       });
   },

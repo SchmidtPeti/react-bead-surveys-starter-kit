@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createSurvey, selectSurvey } from "../redux/surveySlice";
+import { TextField, Button, Container, Typography } from "@mui/material";
+import { Box } from "@mui/system";
 
 function NewSurvey() {
   const [surveyCode, setSurveyCode] = useState("");
@@ -58,22 +60,32 @@ function NewSurvey() {
   };
 
   return (
-    <div>
-      <h1>Új kérdőív</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Kérdőív kód:
-          <textarea
-            value={surveyCode}
-            onChange={(e) => setSurveyCode(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit" disabled={surveyStatus === "loading"}>
+    <Container maxWidth="sm">
+      <Typography variant="h4" component="h1" gutterBottom>
+        Új kérdőív
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <TextField
+          label="Kérdőív kód"
+          value={surveyCode}
+          onChange={(e) => setSurveyCode(e.target.value)}
+          required
+          fullWidth
+          multiline
+          rows={4}
+          margin="normal"
+        />
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          color="primary"
+          disabled={surveyStatus === "loading"}
+        >
           Mentés
-        </button>
-      </form>
-    </div>
+        </Button>
+      </Box>
+    </Container>
   );
 }
 

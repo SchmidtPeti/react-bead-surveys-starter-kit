@@ -2,32 +2,67 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSurveys, selectSurveys, selectSurvey, deleteSurvey, modifySurvey } from '../redux/surveySlice';
+import { List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Snackbar } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LinkIcon from '@mui/icons-material/Link';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const SurveyItem = ({survey, handleDelete, handleCopyLink, handleEdit}) => {
   const [newSurveyName, setNewSurveyName] = useState(survey.name);
   const [newSurveyContent, setNewSurveyContent] = useState(survey.content);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   return (
-    <div key={survey.id}>
-      <h2>
-        <Link to={`/surveys/${survey.id}`}>{survey.name}</Link>
-      </h2>
-      <p>{new Date(survey.createdAt).toLocaleDateString()}</p>
-      <button onClick={() => handleDelete(survey.id)}>Delete</button>
-      <button onClick={() => handleCopyLink(survey.hash)}>Copy Link</button>
-      <button onClick={() => handleEdit(survey.id, {title: newSurveyName, content: newSurveyContent})}>Edit</button>
-      <Link to={`/surveys/${survey.id}/responses`}>View Responses</Link>
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        handleEdit(survey.id, {name: newSurveyName, content: newSurveyContent})
-      }}>
-        <input type="text" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} />
-        <textarea value={newSurveyContent} onChange={(e) => setNewSurveyContent(e.target.value)}>
-        </textarea>
-        <button type="submit">Update</button>
-      </form>
-    </div>
-  )
+    <ListItem key={survey.id}>
+      <ListItemText
+        primary={survey.name}
+        secondary={new Date(survey.createdAt).toLocaleDateString()}
+      />
+      <ListItemSecondaryAction>
+        <IconButton edge="end" aria-label="edit" onClick={() => setOpenEditDialog(true)}>
+          <EditIcon />
+        </IconButton>
+        <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(survey.id)}>
+          <DeleteIcon />
+        </IconButton>
+        <IconButton edge="end" aria-label="copy-link" onClick={() => { handleCopyLink(survey.hash); setOpenSnackbar(true); }}>
+          <LinkIcon />
+        </IconButton>
+        <IconButton edge="end" aria-label="view-responses">
+          <Link to={`/responses/${survey.id}`}><VisibilityIcon /></Link>
+        </IconButton>
+      </ListItemSecondaryAction>
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+        <DialogTitle>Edit Survey</DialogTitle>
+        <DialogContent>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleEdit(survey.id, {name: newSurveyName, content: newSurveyContent});
+            setOpenEditDialog(false);
+          }}>
+            <TextField margin="dense" label="Name" type="text" value={newSurveyName} onChange={(e) => setNewSurveyName(e.target.value)} fullWidth />
+            <TextField margin="dense" label="Content" type="text" value={newSurveyContent} onChange={(e) => setNewSurveyContent(e.target.value)} fullWidth multiline rows={4} />
+            <DialogActions>
+              <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+              <Button type="submit">Update</Button>
+            </DialogActions>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Snackbar
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+        message="Link copied to clipboard!"
+      />
+    </ListItem>
+  );
 }
 
 function MySurveys() {
@@ -47,8 +82,8 @@ function MySurveys() {
     const url = `http://localhost:5173/survey/${hash}`;
     console.log(url);
     try {
+      console.log('Copying URL to clipboard: ', url);
       await navigator.clipboard.writeText(url);
-      console.log('URL copied to clipboard');
     } catch (err) {
       console.log('Failed to copy URL: ', err);
     }
@@ -70,15 +105,17 @@ function MySurveys() {
   return (
     <div>
       <h1>My Surveys</h1>
-      {surveys.data.map((survey) => 
-        <SurveyItem 
-          key={survey.id} 
-          survey={survey} 
-          handleDelete={handleDelete} 
-          handleCopyLink={handleCopyLink} 
-          handleEdit={handleEdit} 
-        />
-      )}
+      <List>
+        {surveys.data.map((survey) => 
+          <SurveyItem 
+            key={survey.id} 
+            survey={survey} 
+            handleDelete={handleDelete} 
+            handleCopyLink={handleCopyLink} 
+            handleEdit={handleEdit} 
+          />
+        )}
+      </List>
     </div>
   );
 }

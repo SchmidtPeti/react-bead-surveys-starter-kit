@@ -3,8 +3,7 @@ import React from 'react';
 function Home() {
   return (
     <div>
-      <h1>Kérdőívek</h1>
-      {/* TODO: Főoldal tartalma */}
+      <h1>Kérdőívek főoldal</h1>
     </div>
   );
 }
